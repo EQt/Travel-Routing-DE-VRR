@@ -15,6 +15,7 @@ use Travel::Routing::DE::EFA;
 use Exception::Class;
 use Getopt::Long qw/:config no_ignore_case/;
 use List::Util qw(first);
+use Term::ANSIColor;
 
 our $VERSION = '2.16';
 my $ignore_info;
@@ -192,8 +193,10 @@ sub display_routes {
 			}
 		}
 
+        my $k = 1;
 		for my $c ( $route->parts ) {
-			display_connection($c);
+			display_connection($c, $k eq 1, $k eq scalar($route->parts));
+            $k = $k + 1;
 		}
 
 		# last one needs to be shown separately
@@ -212,7 +215,7 @@ sub display_routes {
 }
 
 sub display_connection {
-	my ($c) = @_;
+	my ($c, $first, $last) = @_;
 
 	if ( $c->delay ) {
 		printf( "# +%d,  Plan: %s -> %s\n",
@@ -243,7 +246,7 @@ sub display_connection {
 
 	printf(
 		"%-5s ab  %-30s %-20s %s\n",
-		$c->departure_time,
+        $first ? colored($c->departure_time, 'blue') : $c->departure_time,
 		$c->departure_stop_and_platform,
 		$c->train_line || $c->train_product,
 		$c->train_destination,
@@ -256,7 +259,9 @@ sub display_connection {
 		}
 	}
 
-	printf( "%-5s an  %s\n", $c->arrival_time, $c->arrival_stop_and_platform, );
+	printf( "%-5s an  %s\n",
+            $last ? colored($c->arrival_time, 'red') : $c->arrival_time,
+            $c->arrival_stop_and_platform, );
 	print "\n";
 
 	if (    $opt->{'extended-info'}
